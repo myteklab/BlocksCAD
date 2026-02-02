@@ -844,6 +844,124 @@
   </script>
 
   <script>
+    // ===== Chrome Pointer-to-Mouse Event Shim for Blockly Flyout =====
+    // Chrome on Windows with touch-capable hardware sends pointer events
+    // instead of mouse events. This older Blockly version only listens for
+    // mouse events, so dragging blocks from the flyout fails.
+    // This shim converts pointer events to mouse events for flyout elements only.
+    (function setupPointerToMouseShim() {
+      if (window._blocklyPointerShimApplied) return;
+      window._blocklyPointerShimApplied = true;
+
+      function createMouseEvent(type, pointerEvent) {
+        return new MouseEvent(type, {
+          bubbles: true,
+          cancelable: true,
+          view: window,
+          detail: pointerEvent.detail,
+          clientX: pointerEvent.clientX,
+          clientY: pointerEvent.clientY,
+          screenX: pointerEvent.screenX,
+          screenY: pointerEvent.screenY,
+          pageX: pointerEvent.pageX,
+          pageY: pointerEvent.pageY,
+          button: pointerEvent.button,
+          buttons: pointerEvent.buttons,
+          ctrlKey: pointerEvent.ctrlKey,
+          shiftKey: pointerEvent.shiftKey,
+          altKey: pointerEvent.altKey,
+          metaKey: pointerEvent.metaKey,
+          relatedTarget: pointerEvent.relatedTarget
+        });
+      }
+
+      function isBlocklyFlyoutElement(target) {
+        if (!target) return false;
+        var el = target;
+        while (el) {
+          if (el.classList && (
+            el.classList.contains('blocklyFlyout') ||
+            el.classList.contains('blocklyToolboxDiv')
+          )) {
+            return true;
+          }
+          if (el.classList && el.classList.contains('blocklySvg') && !el.closest('.blocklyFlyout')) {
+            return false;
+          }
+          if (el.id === 'blocklyDiv') {
+            return false;
+          }
+          el = el.parentElement;
+        }
+        return false;
+      }
+
+      var isDragging = false;
+      var activePointerId = null;
+
+      document.addEventListener('pointerdown', function(e) {
+        if (e._isShimEvent) return;
+        if (e.button !== 0) return;
+        if (!isBlocklyFlyoutElement(e.target)) return;
+
+        if (e.target.releasePointerCapture) {
+          try { e.target.releasePointerCapture(e.pointerId); } catch (err) {}
+        }
+
+        isDragging = true;
+        activePointerId = e.pointerId;
+        e.preventDefault();
+
+        var mouseEvent = createMouseEvent('mousedown', e);
+        mouseEvent._isShimEvent = true;
+        e.target.dispatchEvent(mouseEvent);
+      }, true);
+
+      document.addEventListener('pointermove', function(e) {
+        if (!isDragging) return;
+        if (e._isShimEvent) return;
+        if (activePointerId !== null && e.pointerId !== activePointerId) return;
+
+        var mouseEvent = createMouseEvent('mousemove', e);
+        mouseEvent._isShimEvent = true;
+        document.dispatchEvent(mouseEvent);
+      }, true);
+
+      document.addEventListener('pointerup', function(e) {
+        if (!isDragging) return;
+        if (e._isShimEvent) return;
+        if (activePointerId !== null && e.pointerId !== activePointerId) return;
+
+        isDragging = false;
+        activePointerId = null;
+
+        var mouseEvent = createMouseEvent('mouseup', e);
+        mouseEvent._isShimEvent = true;
+        document.dispatchEvent(mouseEvent);
+      }, true);
+
+      document.addEventListener('pointercancel', function(e) {
+        if (!isDragging) return;
+        if (e._isShimEvent) return;
+        if (activePointerId !== null && e.pointerId !== activePointerId) return;
+
+        isDragging = false;
+        activePointerId = null;
+
+        var mouseEvent = createMouseEvent('mouseup', e);
+        mouseEvent._isShimEvent = true;
+        document.dispatchEvent(mouseEvent);
+      }, true);
+
+      document.addEventListener('gotpointercapture', function(e) {
+        if (isBlocklyFlyoutElement(e.target)) {
+          try { e.target.releasePointerCapture(e.pointerId); } catch (err) {}
+        }
+      }, true);
+    })();
+  </script>
+
+  <script>
     // ===== Three.js Viewer Enhancements =====
 
     var viewerFixed = false;
