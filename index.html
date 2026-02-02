@@ -1,0 +1,1679 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>BlocksCAD</title>
+
+  <script type="text/javascript" src="dist/blockly_compressed-5c4382c9e0.js"></script>
+  <script type="text/javascript" src="dist/blocks_compressed-6f2647e7ac.js"></script>
+
+  <!-- jQuery -->
+  <script src="jquery/jquery-1.11.3.min.js"></script>
+  <script src="jquery/jquery-ui.min.js"></script>
+  <script src="jquery/jquery.hammer.js"></script>
+  <script src="jquery/jquery.ui.touch-punch.min.js"></script>
+
+  <script src="blockscad/split.min.js"></script>
+
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="bootstrap/bootstrap-3.3.7-dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="bootstrap/bootstrap-3.3.7-dist/css/bootstrap-theme.min.css">
+  <link rel="stylesheet" href="spectrum/spectrum.css">
+  <script src="bootstrap/bootstrap-3.3.7-dist/js/bootstrap.min.js"></script>
+  <script src="bootstrap/bootstrap-notify.min.js"></script>
+  <script src="spectrum/spectrum.js"></script>
+  <script src="gifshot/gifshot.min.js"></script>
+  <script src="src/moment.min.js"></script>
+  <script src="src/timeme.min.js"></script>
+
+  <!-- Lie (promises polyfill library) -->
+  <script src="lie/lie.polyfill.min.js"></script>
+  <!-- Bootbox (helper library for Bootstrap Modals) -->
+  <script src="bootbox/bootbox.min.js"></script>
+
+  <script type="text/javascript" src="dist/openscad_compressed-47c9557f2b.js"></script>
+  <script src="blockscad/sorttable.js"></script>
+
+  <script type="text/javascript" src="blockscad/FileSaver.min.js"></script>
+
+  <script type="text/javascript" src="dist/backend_compressed-73650f50c8.js"></script>
+
+  <!-- Viewer libs -->
+  <script type="text/javascript" src="blockscad/three.min.js"></script>
+  <script type="text/javascript" src="dist/csg_compressed-ea5407529e.js"></script>
+  <script type="text/javascript" src="dist/formats_compressed-5279859f68.js"></script>
+  <script type="text/javascript" src="dist/zviewerstuff_compressed-97686ac8c6.js"></script>
+  <script type="text/javascript" src="dist/viewer_compressed-f7940b1422.js"></script>
+
+  <!-- Load language file first to avoid race condition -->
+  <script src="dist/en-a7e1aab73d.js"></script>
+  <script>
+    // Set up language variables to prevent double loading
+    if (typeof BSUtils === 'undefined') BSUtils = {};
+    BSUtils.LANG = 'en';
+    Blockscad.pLang = 'en';
+
+    // Dummy ga function to prevent Google Analytics errors
+    if (typeof ga === 'undefined') {
+      window.ga = function() {};
+    }
+
+    // Default empty BlocksCAD workspace XML
+    var blockscad_xml = '<xml xmlns="http://blockscad.einsteinsworkshop.com"><version num="1.7.3"></version><color rgba="255,128,255"></color></xml>';
+  </script>
+  <script src="dist/blockscad_compressed-df628b4565.js"></script>
+
+  <script src="blockscad/underscore.js"></script>
+  <script src="dist/openscad-openjscad-translator-c39f44b612.js"></script>
+
+  <!-- Font rendering library -->
+  <script src="opentype/dist/opentype.min.js"></script>
+
+  <!-- BlocksCAD CSS -->
+  <link rel="stylesheet" href="dist/style-0272123afe.css">
+
+  <style>
+    /* CRITICAL: Suppress welcome/tutorial modals immediately */
+    #eob-1, #eob-2, #eob-3, #eob-4,
+    #eob-top, #eob-right, #eob-left, #eob-bottom,
+    .transparent, .modal-backdrop {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+    }
+
+    /* Hide Teach and Learn menus, New project option, and Contact Us */
+    #teach-menu,
+    #learn-menu,
+    #learn-menu-top {
+      display: none !important;
+    }
+    .navbar-nav > li.dropdown:has(#teach-menu),
+    .navbar-nav > li.dropdown:has(#learn-menu),
+    .navbar-nav > li.dropdown:has(#learn-menu-top) {
+      display: none !important;
+    }
+    #file-menu .new-project,
+    #file-menu li:has(.new-project) {
+      display: none !important;
+    }
+    #options-menu li:has(a[href*="contact"]) {
+      display: none !important;
+    }
+
+    /* ===== DARK MODE THEME ===== */
+
+    html, body {
+      background: #1e1e2e !important;
+      background-color: #1e1e2e !important;
+      color: #ddd !important;
+    }
+
+    #main {
+      background: #1e1e2e !important;
+      background-color: #1e1e2e !important;
+    }
+
+    #paneContainer {
+      background: #1e1e2e !important;
+      background-color: #1e1e2e !important;
+    }
+
+    #blocklyDiv {
+      background: #252535 !important;
+      background-color: #252535 !important;
+      border: none !important;
+    }
+
+    .split {
+      background: #1e1e2e !important;
+      background-color: #1e1e2e !important;
+    }
+
+    .flexrow {
+      background: #1e1e2e !important;
+      background-color: #1e1e2e !important;
+    }
+
+    .tab-content,
+    .tab-pane,
+    .tab-pane.active,
+    #blocklyContainer {
+      background: #1e1e2e !important;
+      background-color: #1e1e2e !important;
+    }
+
+    #renderDiv {
+      background: #1a1a2a !important;
+      background-color: #1a1a2a !important;
+    }
+
+    #renderDiv canvas {
+      background: #1a1a2a !important;
+      background-color: #1a1a2a !important;
+    }
+
+    /* Navbar */
+    .navbar,
+    .navbar-default,
+    #top-navigation-bar,
+    .navbar-narrow {
+      background: #16161e !important;
+      background-color: #16161e !important;
+      background-image: none !important;
+      border-color: #333 !important;
+      border-bottom-color: #333 !important;
+    }
+
+    .navbar-default .navbar-brand,
+    .navbar-brand {
+      color: #ddd !important;
+    }
+    #brand_link {
+      visibility: hidden;
+    }
+
+    .navbar-default .navbar-nav > li > a,
+    .navbar-nav > li > a,
+    .dropdown-toggle {
+      color: #ddd !important;
+    }
+
+    .navbar-default .navbar-nav > li > a:hover,
+    .navbar-default .navbar-nav > li > a:focus,
+    .navbar-nav > li > a:hover {
+      color: #fff !important;
+      background-color: #2a2a3a !important;
+      background-image: none !important;
+      text-shadow: none !important;
+    }
+
+    .navbar-default .navbar-nav > .open > a,
+    .navbar-default .navbar-nav > .open > a:hover,
+    .navbar-default .navbar-nav > .open > a:focus {
+      background-color: #2a2a3a !important;
+      background-image: none !important;
+      text-shadow: none !important;
+      color: #fff !important;
+    }
+
+    /* Dropdown menus */
+    .dropdown-menu,
+    ul.dropdown-menu,
+    .navbar-nav .dropdown-menu,
+    .navbar-default .navbar-nav .dropdown-menu {
+      background-color: #2a2a3a !important;
+      border-color: #444 !important;
+    }
+
+    .dropdown-menu > li > a,
+    .navbar-default .navbar-nav .dropdown-menu > li > a,
+    #file-menu > li > a,
+    #options-menu > li > a {
+      color: #ddd !important;
+      background-color: transparent !important;
+    }
+
+    .dropdown-menu > li > a:hover,
+    .dropdown-menu > li > a:focus,
+    .dropdown-menu > li:hover > a,
+    .navbar-default .navbar-nav .dropdown-menu > li > a:hover,
+    .navbar-default .navbar-nav .dropdown-menu > li > a:focus,
+    #file-menu > li > a:hover,
+    #file-menu > li:hover > a,
+    #options-menu > li > a:hover,
+    #options-menu > li:hover > a {
+      background-color: #3a3a4a !important;
+      background-image: none !important;
+      filter: none !important;
+      text-shadow: none !important;
+      color: #fff !important;
+    }
+
+    .dropdown-menu > .active > a,
+    .dropdown-menu > .active > a:hover,
+    .dropdown-menu > .active > a:focus {
+      background-color: #3a3a4a !important;
+      color: #fff !important;
+    }
+
+    .dropdown-menu .divider {
+      background-color: #444 !important;
+    }
+
+    .dropdown-menu .sub-menu {
+      background-color: #2a2a3a !important;
+      border-color: #444 !important;
+      border-left-color: #444 !important;
+    }
+
+    .dropdown-menu > li {
+      background-color: transparent !important;
+    }
+
+    .dropdown-menu > li:hover {
+      background-color: #3a3a4a !important;
+    }
+
+    /* Panels */
+    #left-resizable-panel,
+    #right-resizable-panel {
+      background: #1e1e2e !important;
+      background-color: #1e1e2e !important;
+    }
+
+    #viewerControls {
+      background: #1e1e2e !important;
+      background-color: #1e1e2e !important;
+    }
+
+    /* Buttons */
+    .btn-default,
+    .btn.btn-default {
+      background-color: #2a2a3a !important;
+      background-image: none !important;
+      border-color: #444 !important;
+      color: #ddd !important;
+      text-shadow: none !important;
+    }
+
+    .btn-default:hover,
+    .btn-default:focus,
+    .btn-default:active,
+    .btn-default.active {
+      background-color: #3a3a4a !important;
+      background-image: none !important;
+      border-color: #555 !important;
+      color: #fff !important;
+      text-shadow: none !important;
+    }
+
+    #undoButton, #redoButton, #trashButton {
+      background-color: #2a2a3a !important;
+      border-color: #444 !important;
+    }
+
+    #undoButton img, #redoButton img, #trashButton img {
+      filter: invert(1) brightness(0.85) !important;
+    }
+
+    #renderButton {
+      background-color: #2a2a3a !important;
+      border-color: #555 !important;
+      color: #ddd !important;
+      border-radius: 4px !important;
+    }
+
+    #abortButton {
+      border-color: #555 !important;
+      border-radius: 4px !important;
+    }
+
+    #stlButton {
+      background-color: #2a2a3a !important;
+      border-color: #555 !important;
+      color: #ddd !important;
+      border-radius: 4px !important;
+    }
+
+    .btn-pushed,
+    .btn-default.btn-pushed {
+      background-color: #3a3a4a !important;
+      border-color: #666 !important;
+    }
+
+    .btn-group {
+      background: transparent !important;
+    }
+
+    #defColor {
+      background-color: #2a2a3a !important;
+      border-color: #444 !important;
+    }
+
+    .radio-inline {
+      color: #ddd !important;
+    }
+
+    #openScadPre {
+      background: #1e1e2e !important;
+      color: #ddd !important;
+    }
+
+    #resolution_radio {
+      background-color: #2a2a3a !important;
+      border-color: #444 !important;
+      color: #ddd !important;
+    }
+
+    #resolution_radio label,
+    #resolution_radio span {
+      color: #ddd !important;
+    }
+
+    .btn-big {
+      color: #ccc !important;
+    }
+
+    .btn-big:hover {
+      color: #fff !important;
+    }
+
+    /* Split pane gutter */
+    .gutter {
+      background-color: #333 !important;
+    }
+
+    .gutter.gutter-horizontal {
+      background-color: #333 !important;
+    }
+
+    .resizableDiv {
+      border-color: #444 !important;
+      border-style: solid !important;
+    }
+
+    .ui-widget-content {
+      background: #2a2a3a !important;
+      background-color: #2a2a3a !important;
+      border-color: #444 !important;
+      color: #ddd !important;
+    }
+
+    .renderPane,
+    .big-renderPane {
+      background: #1e1e2e !important;
+      background-color: #1e1e2e !important;
+      border-color: #444 !important;
+    }
+
+    .reg-viewerButtons,
+    .big-viewerButtons {
+      background: #1a1a2a !important;
+      background-color: #1a1a2a !important;
+      border: none !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 4px !important;
+      padding: 4px 8px !important;
+      height: auto !important;
+      min-height: 36px !important;
+    }
+
+    #viewerDefaults {
+      background: #1a1a2a !important;
+      background-color: #1a1a2a !important;
+      border: none !important;
+      border-top: 1px solid #333 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 4px !important;
+      padding: 4px 8px !important;
+      height: auto !important;
+      min-height: 36px !important;
+    }
+
+    .renderbut, .abortbut,
+    .big-renderbut, .big-abortbut {
+      color: #ddd !important;
+    }
+
+    #error-message, .error-message {
+      background-color: #d33 !important;
+      color: #fff !important;
+    }
+
+    .render-ongoing, .big-render-ongoing {
+      color: #ddd !important;
+    }
+
+    pre {
+      background: #1e1e2e !important;
+      background-color: #1e1e2e !important;
+      color: #ddd !important;
+      border-color: #444 !important;
+    }
+
+    .table-striped > tbody > tr:nth-of-type(even) {
+      background-color: #1e1e2e !important;
+    }
+
+    .table-striped > tbody > tr:nth-of-type(odd) {
+      background-color: #252535 !important;
+    }
+
+    table.sortable thead {
+      background-color: #2a2a3a !important;
+      color: #ddd !important;
+    }
+
+    th {
+      border-color: #444 !important;
+      color: #ddd !important;
+    }
+
+    td {
+      color: #ddd !important;
+    }
+
+    .nav-pills > li.active > a,
+    .nav-pills > li.active > a:hover,
+    .nav-pills > li.active > a:focus {
+      background-color: #3a3a4a !important;
+      color: #fff !important;
+    }
+
+    .nav-pills > li > a {
+      color: #bbb !important;
+    }
+
+    .nav-pills > li > a:hover {
+      background-color: #2a2a3a !important;
+      color: #fff !important;
+    }
+
+    /* Modals */
+    .modal-content {
+      background-color: #2a2a3a !important;
+      border-color: #444 !important;
+      color: #ddd !important;
+    }
+
+    .modal-header {
+      border-color: #444 !important;
+    }
+
+    .modal-footer {
+      border-color: #444 !important;
+    }
+
+    .modal-body {
+      color: #ddd !important;
+    }
+
+    [data-notify="container"][class*="alert-pastel-"] {
+      background-color: #2a2a3a !important;
+      border-left-color: #666 !important;
+    }
+
+    .alert-jy {
+      background-color: #2a2a3a !important;
+      color: #ddd !important;
+      border-color: #444 !important;
+    }
+
+    .form-control,
+    input[type="text"],
+    input[type="number"],
+    input[type="password"],
+    select,
+    textarea {
+      background-color: #1a1a2a !important;
+      border-color: #444 !important;
+      color: #ddd !important;
+    }
+
+    .scad-content {
+      background: #1e1e2e !important;
+      color: #ddd !important;
+    }
+
+    /* Blockly toolbox */
+    .blocklyToolboxDiv {
+      background-color: #1a1a2a !important;
+    }
+
+    .blocklyTreeLabel {
+      color: #ddd !important;
+    }
+
+    .blocklyTreeRow:hover {
+      background-color: #2a2a3a !important;
+    }
+
+    .blocklyFlyoutBackground {
+      fill: #2a2a3a !important;
+    }
+
+    .blocklySvg {
+      background-color: #252535 !important;
+    }
+
+    .blocklyMainBackground {
+      fill: #252535 !important;
+      stroke: #252535 !important;
+      stroke-width: 0 !important;
+    }
+
+    .blocklyScrollbarHandle {
+      fill: #555 !important;
+    }
+
+    .blocklyScrollbarBackground {
+      fill: #1a1a2a !important;
+    }
+
+    .blocklyTooltipDiv {
+      background-color: #2a2a3a !important;
+      color: #ddd !important;
+      border-color: #444 !important;
+    }
+
+    .blocklyWidgetDiv .goog-menu {
+      background-color: #2a2a3a !important;
+      border-color: #444 !important;
+    }
+
+    .blocklyWidgetDiv .goog-menuitem {
+      color: #ddd !important;
+    }
+
+    .blocklyWidgetDiv .goog-menuitem-highlight,
+    .blocklyWidgetDiv .goog-menuitem:hover {
+      background-color: #3a3a4a !important;
+    }
+
+    .blocklyWidgetDiv .goog-menuitem-content {
+      color: #ddd !important;
+    }
+
+    /* Viewer button icons */
+    .vbut, .bigvbut {
+      filter: invert(1) brightness(0.85) !important;
+      border-radius: 4px !important;
+      transition: background-color 0.15s !important;
+    }
+    .vbut:hover, .bigvbut:hover {
+      background-color: rgba(255,255,255,0.1) !important;
+    }
+
+    #zInButton, #zOutButton, #zResetButton, #axesButton, #cameraButton {
+      background-color: transparent !important;
+      border: none !important;
+      border-radius: 4px !important;
+      padding: 4px !important;
+      cursor: pointer !important;
+    }
+    #zInButton:hover, #zOutButton:hover, #zResetButton:hover,
+    #axesButton:hover, #cameraButton:hover {
+      background-color: rgba(255,255,255,0.1) !important;
+    }
+    #zInButton img, #zOutButton img, #zResetButton img, #cameraButton img {
+      filter: invert(1) brightness(0.85) !important;
+      width: 22px !important;
+      height: 22px !important;
+    }
+
+    #viewMenu {
+      background-color: #2a2a3a !important;
+      color: #ddd !important;
+      border: 1px solid #444 !important;
+      border-radius: 4px !important;
+      padding: 2px 6px !important;
+      font-size: 12px !important;
+    }
+
+    /* Color picker */
+    #defColor, .sp-replacer {
+      border-color: #444 !important;
+      background-color: #2a2a3a !important;
+    }
+    .sp-container {
+      background-color: #2a2a3a !important;
+      border-color: #444 !important;
+    }
+    .sp-container .sp-input {
+      background-color: #1e1e2e !important;
+      color: #ddd !important;
+      border-color: #555 !important;
+    }
+    .sp-container .sp-palette-toggle {
+      background-color: #3a3a4a !important;
+      color: #ccc !important;
+      border-color: #555 !important;
+    }
+    .sp-container .sp-initial .sp-thumb-inner {
+      border-color: #555 !important;
+    }
+    .sp-container .sp-picker-container {
+      border-left-color: #444 !important;
+    }
+
+    /* Viewer controls panel */
+    #mytekos-viewer-controls {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      z-index: 600;
+      background: rgba(20, 20, 35, 0.9);
+      border-radius: 6px;
+      padding: 6px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      font-size: 11px;
+      color: #aaa;
+      backdrop-filter: blur(4px);
+    }
+    #mytekos-viewer-controls .ctrl-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    #mytekos-viewer-controls label {
+      margin: 0;
+      font-weight: normal;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+      min-width: 75px;
+    }
+    #mytekos-viewer-controls input[type="range"] {
+      width: 70px;
+      height: 4px;
+      cursor: pointer;
+      accent-color: #6c5ce7;
+    }
+    #mytekos-viewer-controls input[type="checkbox"] {
+      accent-color: #6c5ce7;
+      cursor: pointer;
+      width: 14px;
+      height: 14px;
+    }
+    #mytekos-viewer-controls .ctrl-btn {
+      background: rgba(108, 92, 231, 0.3);
+      border: 1px solid #6c5ce7;
+      color: #ccc;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 10px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    #mytekos-viewer-controls .ctrl-btn:hover {
+      background: rgba(108, 92, 231, 0.6);
+      color: #fff;
+    }
+    #mytekos-viewer-controls .ctrl-toggle {
+      background: none;
+      border: none;
+      color: #aaa;
+      font-size: 13px;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      align-self: flex-end;
+    }
+    #mytekos-viewer-controls.collapsed .ctrl-toggle {
+      font-size: 20px;
+    }
+    #mytekos-viewer-controls .ctrl-toggle:hover {
+      color: #fff;
+    }
+    #mytekos-viewer-controls.collapsed .ctrl-body {
+      display: none;
+    }
+    #mytekos-viewer-controls.collapsed {
+      padding: 4px 6px;
+    }
+    #mytekos-viewer-controls .bg-btn-group {
+      display: flex;
+      gap: 3px;
+    }
+    #mytekos-viewer-controls .bg-btn {
+      width: 18px;
+      height: 18px;
+      border-radius: 3px;
+      border: 2px solid transparent;
+      cursor: pointer;
+    }
+    #mytekos-viewer-controls .bg-btn.active {
+      border-color: #6c5ce7;
+    }
+    #mytekos-viewer-controls .bg-btn:hover {
+      border-color: #999;
+    }
+    #mytekos-dimensions {
+      font-size: 10px;
+      color: #8a8;
+      padding: 2px 0 0 0;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      margin-top: 2px;
+      min-height: 14px;
+    }
+    #mytekos-lighting-controls { display: none !important; }
+
+    #projectView {
+      background: #1e1e2e !important;
+      color: #ddd !important;
+    }
+
+    .proj-header {
+      color: #ddd !important;
+    }
+
+    /* ===== END DARK MODE ===== */
+
+    /* Hide login/register elements */
+    #register, #login, #registerButton, #loginButton,
+    a[href*="login"], a[href*="register"],
+    a[href*="signin"], a[href*="signup"],
+    .login-link, .register-link,
+    [id*="login"], [id*="register"] {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      position: absolute !important;
+      left: -9999px !important;
+      pointer-events: none !important;
+    }
+
+    /* Hide project name input */
+    .proj-input, #project-name, #proj_name_label,
+    .input-group {
+      display: none !important;
+      visibility: hidden !important;
+      height: 0 !important;
+      overflow: hidden !important;
+    }
+
+    /* Hide login area and save button (platform handles saving) */
+    #login-area {
+      display: none !important;
+    }
+
+    /* Chrome pointer event fix for Blockly flyout */
+    .blocklyFlyout,
+    .blocklyFlyoutBackground,
+    .blocklyToolboxDiv,
+    .blocklyTreeRow,
+    .blocklyBlockCanvas {
+      touch-action: none;
+    }
+
+    .blocklyFlyout .blocklySvg,
+    .blocklyFlyout .blocklyBlockCanvas,
+    .blocklyFlyout g.blocklyDraggable {
+      touch-action: none;
+      pointer-events: auto;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    // Remove login/register elements periodically
+    setInterval(function() {
+      var links = document.querySelectorAll('a');
+      for (var i = 0; i < links.length; i++) {
+        var text = links[i].textContent || '';
+        if (text === 'Login' || text === 'Register') {
+          try { links[i].remove(); } catch(e) {}
+        }
+      }
+      var loginArea = document.getElementById('login-area');
+      if (loginArea) loginArea.style.display = 'none';
+    }, 100);
+  </script>
+
+  <script>
+    // BlocksCAD generates the page structure
+    document.write(blockscadpage.start());
+
+    // Clean up after page is created
+    setTimeout(function() {
+      var links = document.querySelectorAll('a');
+      for (var i = 0; i < links.length; i++) {
+        var text = links[i].textContent || '';
+        if (text === 'Login' || text === 'Register') {
+          try { links[i].remove(); } catch(e) {}
+        }
+      }
+      var projInput = document.getElementById('project-name');
+      if (projInput && projInput.parentNode) {
+        projInput.parentNode.style.display = 'none';
+      }
+    }, 100);
+  </script>
+
+  <script>
+    // ===== Three.js Viewer Enhancements =====
+
+    var viewerFixed = false;
+
+    function fixViewerLighting(viewer) {
+      if (!viewer || !viewer.scene) return;
+      viewer.scene.traverse(function(child) {
+        if (child instanceof THREE.AmbientLight) {
+          child.color.set(0x333340);
+          child.intensity = 0.5;
+        }
+        if (child instanceof THREE.DirectionalLight && child.name !== 'mytekos_fill_light') {
+          child.intensity = 1.0;
+        }
+      });
+      if (!viewer.scene.getObjectByName('mytekos_fill_light')) {
+        var fillLight = new THREE.DirectionalLight(0xffffff, 0.25);
+        fillLight.position.set(-40, 60, -20);
+        fillLight.name = 'mytekos_fill_light';
+        viewer.scene.add(fillLight);
+      }
+      if (viewer.renderer) {
+        viewer.renderer.outputEncoding = THREE.LinearEncoding || 3000;
+      }
+    }
+
+    function fixViewerMaterial(viewer) {
+      if (!viewer || !viewer.mesh) return;
+      if (viewer.mesh.material) {
+        viewer.mesh.material.specular = new THREE.Color(0x222233);
+        viewer.mesh.material.shininess = 40;
+        viewer.mesh.material.needsUpdate = true;
+      }
+    }
+
+    // Custom Orbit Controls
+    function SimpleOrbitControls(camera, domElement, viewer) {
+      var self = this;
+      this.camera = camera;
+      this.domElement = domElement;
+      this.viewer = viewer;
+      this.target = new THREE.Vector3(0, 0, 0);
+
+      var offset = new THREE.Vector3();
+      offset.subVectors(camera.position, this.target);
+      this.spherical = {
+        radius: offset.length(),
+        theta: Math.atan2(offset.x, offset.y),
+        phi: Math.acos(Math.max(-1, Math.min(1, offset.z / offset.length())))
+      };
+
+      this.rotateSpeed = 0.008;
+      this.zoomSpeed = 1.1;
+      this.panSpeed = 0.5;
+      this.dampingFactor = 0.12;
+      this.minDistance = 2;
+      this.maxDistance = 5000;
+      this.minPhi = 0.05;
+      this.maxPhi = Math.PI - 0.05;
+
+      this.rotateVelocity = { x: 0, y: 0 };
+      this.targetSpherical = {
+        radius: this.spherical.radius,
+        theta: this.spherical.theta,
+        phi: this.spherical.phi
+      };
+      this.targetTarget = this.target.clone();
+
+      this.isRotating = false;
+      this.isPanning = false;
+      this.lastMouse = { x: 0, y: 0 };
+      this.prevMouse = { x: 0, y: 0 };
+
+      this.animating = false;
+      this.animationId = null;
+
+      this.onMouseDown = function(e) {
+        if (e.button === 0) {
+          self.isRotating = true;
+          self.prevMouse.x = e.clientX;
+          self.prevMouse.y = e.clientY;
+        } else if (e.button === 2 || e.button === 1) {
+          self.isPanning = true;
+          self.prevMouse.x = e.clientX;
+          self.prevMouse.y = e.clientY;
+        }
+        self.lastMouse.x = e.clientX;
+        self.lastMouse.y = e.clientY;
+        self.startAnimating();
+        e.preventDefault();
+      };
+
+      this.onMouseMove = function(e) {
+        var dx = e.clientX - self.prevMouse.x;
+        var dy = e.clientY - self.prevMouse.y;
+        self.prevMouse.x = e.clientX;
+        self.prevMouse.y = e.clientY;
+
+        if (self.isRotating) {
+          self.targetSpherical.theta += dx * self.rotateSpeed;
+          self.targetSpherical.phi -= dy * self.rotateSpeed;
+          self.targetSpherical.phi = Math.max(self.minPhi, Math.min(self.maxPhi, self.targetSpherical.phi));
+        }
+        if (self.isPanning) {
+          var panX = -dx * self.panSpeed * self.spherical.radius * 0.002;
+          var panY = dy * self.panSpeed * self.spherical.radius * 0.002;
+          var camRight = new THREE.Vector3();
+          var camUp = new THREE.Vector3();
+          camRight.setFromMatrixColumn(self.camera.matrixWorld, 0);
+          camUp.setFromMatrixColumn(self.camera.matrixWorld, 1);
+          self.targetTarget.addScaledVector(camRight, panX);
+          self.targetTarget.addScaledVector(camUp, panY);
+        }
+      };
+
+      this.onMouseUp = function(e) {
+        self.isRotating = false;
+        self.isPanning = false;
+      };
+
+      this.onWheel = function(e) {
+        e.preventDefault();
+        if (e.deltaY > 0) {
+          self.targetSpherical.radius *= self.zoomSpeed;
+        } else {
+          self.targetSpherical.radius /= self.zoomSpeed;
+        }
+        self.targetSpherical.radius = Math.max(self.minDistance, Math.min(self.maxDistance, self.targetSpherical.radius));
+        self.startAnimating();
+      };
+
+      this.onContextMenu = function(e) { e.preventDefault(); };
+
+      // Touch support
+      this.touchStartDist = 0;
+      this.onTouchStart = function(e) {
+        if (e.touches.length === 1) {
+          self.isRotating = true;
+          self.prevMouse.x = e.touches[0].clientX;
+          self.prevMouse.y = e.touches[0].clientY;
+        } else if (e.touches.length === 2) {
+          self.isRotating = false;
+          var dx = e.touches[1].clientX - e.touches[0].clientX;
+          var dy = e.touches[1].clientY - e.touches[0].clientY;
+          self.touchStartDist = Math.sqrt(dx * dx + dy * dy);
+          self.prevMouse.x = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+          self.prevMouse.y = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        }
+        self.startAnimating();
+        e.preventDefault();
+      };
+
+      this.onTouchMove = function(e) {
+        if (e.touches.length === 1 && self.isRotating) {
+          var dx = e.touches[0].clientX - self.prevMouse.x;
+          var dy = e.touches[0].clientY - self.prevMouse.y;
+          self.prevMouse.x = e.touches[0].clientX;
+          self.prevMouse.y = e.touches[0].clientY;
+          self.targetSpherical.theta += dx * self.rotateSpeed;
+          self.targetSpherical.phi -= dy * self.rotateSpeed;
+          self.targetSpherical.phi = Math.max(self.minPhi, Math.min(self.maxPhi, self.targetSpherical.phi));
+        } else if (e.touches.length === 2) {
+          var dx = e.touches[1].clientX - e.touches[0].clientX;
+          var dy = e.touches[1].clientY - e.touches[0].clientY;
+          var dist = Math.sqrt(dx * dx + dy * dy);
+          if (self.touchStartDist > 0) {
+            var scale = self.touchStartDist / dist;
+            self.targetSpherical.radius = Math.max(self.minDistance, Math.min(self.maxDistance, self.spherical.radius * scale));
+          }
+          self.touchStartDist = dist;
+          var cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+          var cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+          var panDx = cx - self.prevMouse.x;
+          var panDy = cy - self.prevMouse.y;
+          self.prevMouse.x = cx;
+          self.prevMouse.y = cy;
+          var panX = -panDx * self.panSpeed * self.spherical.radius * 0.002;
+          var panY = panDy * self.panSpeed * self.spherical.radius * 0.002;
+          var camRight = new THREE.Vector3();
+          var camUp = new THREE.Vector3();
+          camRight.setFromMatrixColumn(self.camera.matrixWorld, 0);
+          camUp.setFromMatrixColumn(self.camera.matrixWorld, 1);
+          self.targetTarget.addScaledVector(camRight, panX);
+          self.targetTarget.addScaledVector(camUp, panY);
+        }
+        e.preventDefault();
+      };
+
+      this.onTouchEnd = function(e) {
+        self.isRotating = false;
+        self.touchStartDist = 0;
+      };
+
+      domElement.addEventListener('mousedown', this.onMouseDown, false);
+      document.addEventListener('mousemove', this.onMouseMove, false);
+      document.addEventListener('mouseup', this.onMouseUp, false);
+      domElement.addEventListener('wheel', this.onWheel, { passive: false });
+      domElement.addEventListener('contextmenu', this.onContextMenu, false);
+      domElement.addEventListener('touchstart', this.onTouchStart, { passive: false });
+      domElement.addEventListener('touchmove', this.onTouchMove, { passive: false });
+      domElement.addEventListener('touchend', this.onTouchEnd, false);
+
+      this.startAnimating();
+    }
+
+    SimpleOrbitControls.prototype.startAnimating = function() {
+      if (this.animating) return;
+      this.animating = true;
+      this.animate();
+    };
+
+    SimpleOrbitControls.prototype.animate = function() {
+      var self = this;
+      var d = this.dampingFactor;
+      this.spherical.theta += (this.targetSpherical.theta - this.spherical.theta) * d;
+      this.spherical.phi += (this.targetSpherical.phi - this.spherical.phi) * d;
+      this.spherical.radius += (this.targetSpherical.radius - this.spherical.radius) * d;
+      this.target.lerp(this.targetTarget, d);
+
+      var sinPhi = Math.sin(this.spherical.phi);
+      var cosPhi = Math.cos(this.spherical.phi);
+      var sinTheta = Math.sin(this.spherical.theta);
+      var cosTheta = Math.cos(this.spherical.theta);
+
+      this.camera.position.set(
+        this.target.x + this.spherical.radius * sinPhi * sinTheta,
+        this.target.y + this.spherical.radius * sinPhi * cosTheta,
+        this.target.z + this.spherical.radius * cosPhi
+      );
+      this.camera.up.set(0, 0, 1);
+      this.camera.lookAt(this.target);
+
+      var dist = this.spherical.radius;
+      this.camera.near = Math.max(0.1, dist * 0.01);
+      this.camera.far = Math.max(1000, dist * 100);
+      this.camera.updateProjectionMatrix();
+
+      if (this.viewer && this.viewer.onFallbackUpdate) {
+        this.viewer.onFallbackUpdate();
+      }
+
+      var thetaDiff = Math.abs(this.targetSpherical.theta - this.spherical.theta);
+      var phiDiff = Math.abs(this.targetSpherical.phi - this.spherical.phi);
+      var radiusDiff = Math.abs(this.targetSpherical.radius - this.spherical.radius);
+      var targetDiff = this.target.distanceTo(this.targetTarget);
+
+      if (this.isRotating || this.isPanning || thetaDiff > 0.0001 || phiDiff > 0.0001 || radiusDiff > 0.01 || targetDiff > 0.01) {
+        this.animationId = requestAnimationFrame(function() { self.animate(); });
+      } else {
+        this.animating = false;
+      }
+    };
+
+    SimpleOrbitControls.prototype.reset = function(position) {
+      if (position) {
+        var offset = new THREE.Vector3(position[0], position[1], position[2]);
+        this.targetSpherical.radius = offset.length();
+        this.targetSpherical.theta = Math.atan2(offset.x, offset.y);
+        this.targetSpherical.phi = Math.acos(Math.max(-1, Math.min(1, offset.z / offset.length())));
+      }
+      this.targetTarget.set(0, 0, 0);
+      this.startAnimating();
+    };
+
+    SimpleOrbitControls.prototype.zoomCameraKey = function(zoomIn) {
+      if (zoomIn) {
+        this.targetSpherical.radius /= this.zoomSpeed;
+      } else {
+        this.targetSpherical.radius *= this.zoomSpeed;
+      }
+      this.targetSpherical.radius = Math.max(this.minDistance, Math.min(this.maxDistance, this.targetSpherical.radius));
+      this.startAnimating();
+    };
+
+    function fixViewerControls(viewer) {
+      if (!viewer || !viewer.camera || !viewer.renderer) return;
+      var domElement = viewer.renderer.domElement;
+
+      if (viewer.controls && viewer.controls.dispose) {
+        viewer.controls.dispose();
+      }
+
+      var orbitControls = new SimpleOrbitControls(viewer.camera, domElement, viewer);
+      viewer.controls = orbitControls;
+
+      viewer.viewReset = function(view) {
+        if (!view) {
+          var menu = document.getElementById('viewMenu');
+          view = menu ? menu.value : 'diagonal';
+        }
+        var positions = {
+          'diagonal': [100, -100, 30],
+          'top': [0.1, -0.1, 90],
+          'bottom': [0.1, -0.1, -90],
+          'right': [0, -90, 0],
+          'front': [90, 0, 0],
+          'left': [0, 90, 0],
+          'back': [-90, 0, 0]
+        };
+        var pos = positions[view] || positions['diagonal'];
+        orbitControls.reset(pos);
+      };
+
+      var viewMenu = document.getElementById('viewMenu');
+      if (viewMenu && !viewMenu._orbitHandler) {
+        viewMenu._orbitHandler = true;
+        viewMenu.addEventListener('change', function() {
+          viewer.viewReset(this.value);
+        });
+      }
+
+      var resetBtn = document.getElementById('zResetButton');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', function(e) {
+          viewer.viewReset();
+        });
+      }
+    }
+
+    function addViewerControls(viewer) {
+      var container = viewer.renderer.domElement.parentElement;
+      if (!container || document.getElementById('mytekos-viewer-controls')) return;
+
+      var panel = document.createElement('div');
+      panel.id = 'mytekos-viewer-controls';
+      var isCollapsed = localStorage.getItem('blockscad_controls_collapsed') === '1';
+      if (isCollapsed) panel.classList.add('collapsed');
+      panel.innerHTML =
+        '<button class="ctrl-toggle" id="mytekos-ctrl-toggle" title="Toggle controls">' +
+          (isCollapsed ? '&#9881;' : '&#10005;') +
+        '</button>' +
+        '<div class="ctrl-body">' +
+        '<div class="ctrl-row">' +
+          '<label>Brightness <input type="range" id="mytekos-brightness" min="20" max="150" value="70"></label>' +
+        '</div>' +
+        '<div class="ctrl-row">' +
+          '<label>Opacity <input type="range" id="mytekos-opacity" min="5" max="100" value="100"></label>' +
+        '</div>' +
+        '<div class="ctrl-row">' +
+          '<label><input type="checkbox" id="mytekos-wireframe"> Wireframe</label>' +
+        '</div>' +
+        '<div class="ctrl-row">' +
+          '<label><input type="checkbox" id="mytekos-edges"> Edges</label>' +
+        '</div>' +
+        '<div class="ctrl-row">' +
+          '<span>BG</span>' +
+          '<div class="bg-btn-group">' +
+            '<div class="bg-btn active" data-bg="dark" style="background:#1a1a2a" title="Dark"></div>' +
+            '<div class="bg-btn" data-bg="gray" style="background:#555" title="Gray"></div>' +
+            '<div class="bg-btn" data-bg="light" style="background:#e0e0e0" title="Light"></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="ctrl-row">' +
+          '<button class="ctrl-btn" id="mytekos-zoomfit">Zoom to Fit</button>' +
+        '</div>' +
+        '<div id="mytekos-dimensions"></div>' +
+        '</div>';
+      container.style.position = 'relative';
+      container.appendChild(panel);
+
+      document.getElementById('mytekos-brightness').addEventListener('input', function() {
+        var val = parseInt(this.value) / 100;
+        viewer.scene.traverse(function(child) {
+          if (child instanceof THREE.AmbientLight) child.intensity = val * 0.5;
+          if (child instanceof THREE.DirectionalLight) child.intensity = val * 1.2;
+        });
+        if (viewer.onFallbackUpdate) viewer.onFallbackUpdate();
+      });
+
+      document.getElementById('mytekos-opacity').addEventListener('input', function() {
+        var opacity = parseInt(this.value) / 100;
+        if (viewer.mesh && viewer.mesh.material) {
+          viewer.mesh.material.transparent = opacity < 1;
+          viewer.mesh.material.opacity = opacity;
+          viewer.mesh.material.needsUpdate = true;
+        }
+        if (viewer.onFallbackUpdate) viewer.onFallbackUpdate();
+      });
+
+      document.getElementById('mytekos-wireframe').addEventListener('change', function() {
+        if (viewer.mesh && viewer.mesh.material) {
+          viewer.mesh.material.wireframe = this.checked;
+          viewer.mesh.material.needsUpdate = true;
+        }
+        if (viewer.onFallbackUpdate) viewer.onFallbackUpdate();
+      });
+
+      document.getElementById('mytekos-edges').addEventListener('change', function() {
+        toggleEdgeHighlighting(viewer, this.checked);
+      });
+
+      panel.querySelectorAll('.bg-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          panel.querySelectorAll('.bg-btn').forEach(function(b) { b.classList.remove('active'); });
+          this.classList.add('active');
+          setViewerBackground(viewer, this.getAttribute('data-bg'));
+        });
+      });
+
+      document.getElementById('mytekos-zoomfit').addEventListener('click', function() {
+        zoomToFit(viewer);
+      });
+
+      document.getElementById('mytekos-ctrl-toggle').addEventListener('click', function() {
+        var collapsed = panel.classList.toggle('collapsed');
+        this.innerHTML = collapsed ? '&#9881;' : '&#10005;';
+        localStorage.setItem('blockscad_controls_collapsed', collapsed ? '1' : '0');
+      });
+    }
+
+    // Edge highlighting
+    function toggleEdgeHighlighting(viewer, enabled) {
+      if (!viewer.mesh) return;
+      if (viewer._edgeLines) {
+        if (viewer.group) {
+          viewer.group.remove(viewer._edgeLines);
+        } else {
+          viewer.scene.remove(viewer._edgeLines);
+        }
+        viewer._edgeLines.geometry.dispose();
+        viewer._edgeLines.material.dispose();
+        viewer._edgeLines = null;
+      }
+      if (enabled && viewer.mesh.geometry) {
+        var edgesGeo = new THREE.EdgesGeometry(viewer.mesh.geometry, 30);
+        var edgeColor = (currentBg === 'light') ? 0x222222 : 0xffffff;
+        var edgesMat = new THREE.LineBasicMaterial({ color: edgeColor });
+        var edgeLines = new THREE.LineSegments(edgesGeo, edgesMat);
+        edgeLines.position.copy(viewer.mesh.position);
+        edgeLines.rotation.copy(viewer.mesh.rotation);
+        edgeLines.scale.copy(viewer.mesh.scale);
+        edgeLines.frustumCulled = false;
+        if (viewer.group) {
+          viewer.group.add(edgeLines);
+        } else {
+          viewer.scene.add(edgeLines);
+        }
+        viewer._edgeLines = edgeLines;
+      }
+      if (viewer.onFallbackUpdate) viewer.onFallbackUpdate();
+    }
+
+    // Background color switching
+    var bgColors = { dark: 0x1a1a2a, gray: 0x555555, light: 0xe0e0e0 };
+    var currentBg = 'dark';
+    function setViewerBackground(viewer, colorName) {
+      currentBg = colorName;
+      window._mytekosCustomBg = true;
+      var color = bgColors[colorName] || bgColors.dark;
+      viewer.scene.background = new THREE.Color(color);
+      if (viewer.renderer) viewer.renderer.setClearColor(color);
+      if (viewer._edgeLines) {
+        var edgeColor = colorName === 'light' ? 0x222222 : 0xffffff;
+        viewer._edgeLines.material.color.setHex(edgeColor);
+        viewer._edgeLines.material.needsUpdate = true;
+      }
+      if (viewer.onFallbackUpdate) viewer.onFallbackUpdate();
+    }
+
+    // Zoom to Fit
+    function zoomToFit(viewer) {
+      if (!viewer.mesh || !viewer.mesh.geometry) return;
+      viewer.mesh.geometry.computeBoundingSphere();
+      var sphere = viewer.mesh.geometry.boundingSphere;
+      if (!sphere || sphere.radius === 0) return;
+      var radius = sphere.radius;
+      var center = sphere.center.clone();
+      if (viewer.mesh.matrixWorld) center.applyMatrix4(viewer.mesh.matrixWorld);
+      var fov = viewer.camera.fov * (Math.PI / 180);
+      var dist = radius / Math.sin(fov / 2) * 1.3;
+      var camPos = viewer.camera.position.clone().sub(
+        viewer.controls ? viewer.controls.target.clone() : new THREE.Vector3(0, 0, 0)
+      );
+      camPos.normalize().multiplyScalar(dist);
+      viewer.camera.position.copy(center).add(camPos);
+      viewer.camera.lookAt(center);
+      viewer.camera.updateProjectionMatrix();
+      if (viewer.controls && viewer.controls.target) {
+        viewer.controls.target.copy(center);
+        if (viewer.controls.update) viewer.controls.update();
+      }
+      if (viewer.onFallbackUpdate) viewer.onFallbackUpdate();
+    }
+
+    // Model dimensions display
+    function updateModelDimensions(viewer) {
+      var dimEl = document.getElementById('mytekos-dimensions');
+      if (!dimEl) return;
+      if (!viewer || !viewer.mesh || !viewer.mesh.geometry) { dimEl.textContent = ''; return; }
+      viewer.mesh.geometry.computeBoundingBox();
+      var box = viewer.mesh.geometry.boundingBox;
+      if (!box) { dimEl.textContent = ''; return; }
+      var w = (box.max.x - box.min.x).toFixed(1);
+      var h = (box.max.y - box.min.y).toFixed(1);
+      var d = (box.max.z - box.min.z).toFixed(1);
+      dimEl.textContent = w + ' \u00D7 ' + h + ' \u00D7 ' + d + ' mm';
+    }
+
+    // Enhanced color picker
+    function enhanceColorPicker() {
+      var defColor = document.getElementById('defColor');
+      if (!defColor || defColor._enhanced) return;
+      if (typeof $ === 'undefined' || !$.fn.spectrum) return;
+      defColor._enhanced = true;
+      var currentColor = $('#defColor').spectrum('get');
+      $('#defColor').spectrum('destroy');
+      $('#defColor').spectrum({
+        color: currentColor || 'rgb(255,128,255)',
+        showPalette: true,
+        showSelectionPalette: true,
+        showInput: true,
+        showInitial: true,
+        preferredFormat: 'hex',
+        className: 'defaultColor btn btn-default',
+        appendTo: '#viewerButtons',
+        hideAfterPaletteSelect: false,
+        showPaletteOnly: false,
+        togglePaletteOnly: true,
+        togglePaletteMoreText: 'More',
+        togglePaletteText: 'Less',
+        move: function(color) {
+          var proc = window.Blockscad && window.Blockscad.gProcessor;
+          if (proc && proc.viewer && proc.viewer.mesh && proc.viewer.mesh.material) {
+            var r = color._r / 255, g = color._g / 255, b = color._b / 255;
+            proc.viewer.mesh.material.color.setRGB(r, g, b);
+            proc.viewer.mesh.material.needsUpdate = true;
+            if (proc.viewer.onFallbackUpdate) proc.viewer.onFallbackUpdate();
+          }
+        },
+        change: function(color) {
+          if (window.Blockscad && window.Blockscad.setColor) {
+            Blockscad.setColor(color._r, color._g, color._b);
+          }
+        },
+        palette: [
+          ['rgb(255,128,255)', 'rgb(153,153,153)', 'rgb(238,60,60)', 'rgb(250,150,0)'],
+          ['rgb(250,214,0)', 'rgb(50,220,50)', 'rgb(20,150,255)', 'rgb(180,85,254)'],
+          ['rgb(255,255,255)', 'rgb(80,80,80)', 'rgb(180,40,40)', 'rgb(200,100,50)'],
+          ['rgb(100,200,150)', 'rgb(60,180,180)', 'rgb(100,100,200)', 'rgb(200,150,100)'],
+          ['rgb(40,40,40)', 'rgb(128,128,128)', 'rgb(255,200,200)', 'rgb(200,255,200)'],
+          ['rgb(200,200,255)', 'rgb(255,255,200)', 'rgb(200,255,255)', 'rgb(255,200,255)']
+        ]
+      });
+      $('.sp-dd').remove();
+    }
+
+    function fixViewer() {
+      if (viewerFixed) return;
+      if (!window.Blockscad || !window.Blockscad.gProcessor) return;
+      if (typeof THREE === 'undefined') return;
+      var proc = window.Blockscad.gProcessor;
+      if (!proc.viewer || !proc.viewer.scene) return;
+
+      proc.viewer.scene.background = new THREE.Color(0x1a1a2a);
+      if (proc.viewer.renderer) proc.viewer.renderer.setClearColor(0x1a1a2a);
+
+      fixViewerLighting(proc.viewer);
+      fixViewerMaterial(proc.viewer);
+      fixViewerControls(proc.viewer);
+      addViewerControls(proc.viewer);
+      enhanceColorPicker();
+
+      if (proc.picviewer && proc.picviewer.scene) {
+        proc.picviewer.scene.background = new THREE.Color(0x1a1a2a);
+      }
+      if (proc.rpicviewer && proc.rpicviewer.scene) {
+        proc.rpicviewer.scene.background = new THREE.Color(0x1a1a2a);
+      }
+
+      if (proc.viewer.onDraw) proc.viewer.onDraw();
+      viewerFixed = true;
+    }
+
+    // ===== GLB EXPORT =====
+
+    function generateGLB(mesh) {
+      if (!mesh || !mesh.geometry) return null;
+      var geometry = mesh.geometry;
+
+      function srgbToLinear(c) {
+        return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+      }
+
+      var defaultColor = [0.667, 0.667, 0.667];
+      if (window.Blockscad && window.Blockscad.gProcessor && window.Blockscad.gProcessor.viewer) {
+        var dc = window.Blockscad.gProcessor.viewer.defaultColor;
+        if (dc && dc.length >= 3) defaultColor = [dc[0], dc[1], dc[2]];
+      }
+      var colorPicker = document.getElementById('defColor');
+      if (colorPicker && colorPicker.value) {
+        var hex = colorPicker.value.replace('#', '');
+        if (hex.length === 6) {
+          defaultColor = [
+            parseInt(hex.substr(0, 2), 16) / 255,
+            parseInt(hex.substr(2, 2), 16) / 255,
+            parseInt(hex.substr(4, 2), 16) / 255
+          ];
+        }
+      }
+      defaultColor = [srgbToLinear(defaultColor[0]), srgbToLinear(defaultColor[1]), srgbToLinear(defaultColor[2])];
+
+      var positions, normals, colors;
+      var vertexCount;
+
+      if (geometry.getAttribute && geometry.getAttribute('position')) {
+        var posAttr = geometry.getAttribute('position');
+        var normAttr = geometry.getAttribute('normal');
+        var colorAttr = geometry.getAttribute('color');
+        vertexCount = posAttr.count;
+        positions = new Float32Array(vertexCount * 3);
+        for (var i = 0; i < vertexCount; i++) {
+          positions[i * 3] = posAttr.getX(i);
+          positions[i * 3 + 1] = posAttr.getY(i);
+          positions[i * 3 + 2] = posAttr.getZ(i);
+        }
+        if (normAttr) {
+          normals = new Float32Array(vertexCount * 3);
+          for (var i = 0; i < vertexCount; i++) {
+            normals[i * 3] = normAttr.getX(i);
+            normals[i * 3 + 1] = normAttr.getY(i);
+            normals[i * 3 + 2] = normAttr.getZ(i);
+          }
+        }
+        colors = new Float32Array(vertexCount * 4);
+        for (var i = 0; i < vertexCount; i++) {
+          if (colorAttr) {
+            colors[i * 4] = srgbToLinear(colorAttr.getX(i));
+            colors[i * 4 + 1] = srgbToLinear(colorAttr.getY(i));
+            colors[i * 4 + 2] = srgbToLinear(colorAttr.getZ(i));
+          } else {
+            colors[i * 4] = defaultColor[0];
+            colors[i * 4 + 1] = defaultColor[1];
+            colors[i * 4 + 2] = defaultColor[2];
+          }
+          colors[i * 4 + 3] = 1.0;
+        }
+      } else if (geometry.faces && geometry.vertices) {
+        var faces = geometry.faces;
+        var verts = geometry.vertices;
+        vertexCount = faces.length * 3;
+        positions = new Float32Array(vertexCount * 3);
+        normals = new Float32Array(vertexCount * 3);
+        colors = new Float32Array(vertexCount * 4);
+        for (var f = 0; f < faces.length; f++) {
+          var face = faces[f];
+          var va = verts[face.a], vb = verts[face.b], vc = verts[face.c];
+          var idx = f * 9;
+          positions[idx] = va.x; positions[idx+1] = va.y; positions[idx+2] = va.z;
+          positions[idx+3] = vb.x; positions[idx+4] = vb.y; positions[idx+5] = vb.z;
+          positions[idx+6] = vc.x; positions[idx+7] = vc.y; positions[idx+8] = vc.z;
+          var n = face.normal;
+          normals[idx] = n.x; normals[idx+1] = n.y; normals[idx+2] = n.z;
+          normals[idx+3] = n.x; normals[idx+4] = n.y; normals[idx+5] = n.z;
+          normals[idx+6] = n.x; normals[idx+7] = n.y; normals[idx+8] = n.z;
+          var r, g, b;
+          if (face.color && (face.color.r !== undefined)) {
+            r = srgbToLinear(face.color.r); g = srgbToLinear(face.color.g); b = srgbToLinear(face.color.b);
+          } else {
+            r = defaultColor[0]; g = defaultColor[1]; b = defaultColor[2];
+          }
+          var ci = f * 12;
+          colors[ci] = r; colors[ci+1] = g; colors[ci+2] = b; colors[ci+3] = 1.0;
+          colors[ci+4] = r; colors[ci+5] = g; colors[ci+6] = b; colors[ci+7] = 1.0;
+          colors[ci+8] = r; colors[ci+9] = g; colors[ci+10] = b; colors[ci+11] = 1.0;
+        }
+      } else {
+        return null;
+      }
+
+      var minPos = [Infinity, Infinity, Infinity];
+      var maxPos = [-Infinity, -Infinity, -Infinity];
+      for (var i = 0; i < vertexCount; i++) {
+        var x = positions[i*3], y = positions[i*3+1], z = positions[i*3+2];
+        minPos[0] = Math.min(minPos[0], x); maxPos[0] = Math.max(maxPos[0], x);
+        minPos[1] = Math.min(minPos[1], y); maxPos[1] = Math.max(maxPos[1], y);
+        minPos[2] = Math.min(minPos[2], z); maxPos[2] = Math.max(maxPos[2], z);
+      }
+
+      var posBytes = vertexCount * 3 * 4;
+      var normBytes = normals ? vertexCount * 3 * 4 : 0;
+      var colorBytes = vertexCount * 4 * 4;
+      var totalBinSize = posBytes + normBytes + colorBytes;
+      var paddedBinSize = Math.ceil(totalBinSize / 4) * 4;
+
+      var binBuffer = new ArrayBuffer(paddedBinSize);
+      var floatArray = new Float32Array(binBuffer);
+      var offset = 0;
+      for (var i = 0; i < positions.length; i++) floatArray[offset++] = positions[i];
+      var normByteOffset = posBytes;
+      if (normals) {
+        for (var i = 0; i < normals.length; i++) floatArray[offset++] = normals[i];
+      }
+      var colorByteOffset = posBytes + normBytes;
+      for (var i = 0; i < colors.length; i++) floatArray[offset++] = colors[i];
+
+      var bufferViews = [];
+      var accessors = [];
+      var attributes = {};
+      var accessorIndex = 0;
+
+      bufferViews.push({ buffer: 0, byteOffset: 0, byteLength: posBytes, target: 34962 });
+      accessors.push({ bufferView: 0, componentType: 5126, count: vertexCount, type: 'VEC3', min: minPos, max: maxPos });
+      attributes['POSITION'] = accessorIndex++;
+
+      if (normals) {
+        bufferViews.push({ buffer: 0, byteOffset: normByteOffset, byteLength: normBytes, target: 34962 });
+        accessors.push({ bufferView: bufferViews.length - 1, componentType: 5126, count: vertexCount, type: 'VEC3' });
+        attributes['NORMAL'] = accessorIndex++;
+      }
+
+      bufferViews.push({ buffer: 0, byteOffset: colorByteOffset, byteLength: colorBytes, target: 34962 });
+      accessors.push({ bufferView: bufferViews.length - 1, componentType: 5126, count: vertexCount, type: 'VEC4' });
+      attributes['COLOR_0'] = accessorIndex++;
+
+      var gltfJson = {
+        asset: { version: '2.0', generator: 'BlocksCAD' },
+        scene: 0,
+        scenes: [{ nodes: [0], name: 'Scene' }],
+        nodes: [{ mesh: 0, name: 'BlocksCAD Model' }],
+        meshes: [{ name: 'BlocksCAD Mesh', primitives: [{ attributes: attributes, mode: 4, material: 0 }] }],
+        materials: [{ name: 'BlocksCAD Material', pbrMetallicRoughness: { metallicFactor: 0.1, roughnessFactor: 0.7 }, doubleSided: true }],
+        accessors: accessors,
+        bufferViews: bufferViews,
+        buffers: [{ byteLength: paddedBinSize }]
+      };
+
+      var jsonStr = JSON.stringify(gltfJson);
+      while (jsonStr.length % 4 !== 0) jsonStr += ' ';
+      var jsonBytes = new TextEncoder().encode(jsonStr);
+
+      var headerSize = 12;
+      var jsonChunkSize = 8 + jsonBytes.length;
+      var binChunkSize = 8 + paddedBinSize;
+      var totalSize = headerSize + jsonChunkSize + binChunkSize;
+
+      var glbBuffer = new ArrayBuffer(totalSize);
+      var glbView = new DataView(glbBuffer);
+      var bytePos = 0;
+
+      glbView.setUint32(bytePos, 0x46546C67, true); bytePos += 4;
+      glbView.setUint32(bytePos, 2, true); bytePos += 4;
+      glbView.setUint32(bytePos, totalSize, true); bytePos += 4;
+
+      glbView.setUint32(bytePos, jsonBytes.length, true); bytePos += 4;
+      glbView.setUint32(bytePos, 0x4E4F534A, true); bytePos += 4;
+      new Uint8Array(glbBuffer, bytePos, jsonBytes.length).set(jsonBytes);
+      bytePos += jsonBytes.length;
+
+      glbView.setUint32(bytePos, paddedBinSize, true); bytePos += 4;
+      glbView.setUint32(bytePos, 0x004E4942, true); bytePos += 4;
+      new Uint8Array(glbBuffer, bytePos, paddedBinSize).set(new Uint8Array(binBuffer));
+
+      return new Blob([glbBuffer], { type: 'model/gltf-binary' });
+    }
+
+    // ===== END GLB EXPORT =====
+
+    // Fix material after each render
+    function fixMaterialOnRender() {
+      if (!window.Blockscad || !window.Blockscad.gProcessor) return;
+      var proc = window.Blockscad.gProcessor;
+      if (proc.viewer) {
+        fixViewerMaterial(proc.viewer);
+        fixViewerLighting(proc.viewer);
+        if (proc.viewer.mesh && proc.viewer.mesh.material) {
+          var wireframeChk = document.getElementById('mytekos-wireframe');
+          if (wireframeChk && wireframeChk.checked) proc.viewer.mesh.material.wireframe = true;
+          var opacitySlider = document.getElementById('mytekos-opacity');
+          if (opacitySlider) {
+            var opacity = parseInt(opacitySlider.value) / 100;
+            if (opacity < 1) {
+              proc.viewer.mesh.material.transparent = true;
+              proc.viewer.mesh.material.opacity = opacity;
+            }
+          }
+          proc.viewer.mesh.material.needsUpdate = true;
+        }
+        var edgesChk = document.getElementById('mytekos-edges');
+        if (edgesChk && edgesChk.checked) toggleEdgeHighlighting(proc.viewer, true);
+        if (currentBg !== 'dark') setViewerBackground(proc.viewer, currentBg);
+        updateModelDimensions(proc.viewer);
+        if (proc.viewer.onFallbackUpdate) proc.viewer.onFallbackUpdate();
+      }
+    }
+
+    document.body.addEventListener('renderDone', function() {
+      setTimeout(fixMaterialOnRender, 100);
+    });
+
+    // Add GLB format option
+    function addGLBExportOption() {
+      var formatDropdown = document.getElementById('render-type');
+      if (formatDropdown && !formatDropdown.querySelector('option[value="glb"]')) {
+        var opt = document.createElement('option');
+        opt.value = 'glb';
+        opt.textContent = 'GLB (3D Model)';
+        formatDropdown.insertBefore(opt, formatDropdown.firstChild);
+      }
+      if (formatDropdown && !formatDropdown._glbListener) {
+        formatDropdown._glbListener = true;
+        var stlBtn = document.getElementById('stlButton');
+        var originalButtonText = stlBtn ? stlBtn.innerHTML : 'Export STL';
+        formatDropdown.addEventListener('change', function() {
+          var btn = document.getElementById('stlButton');
+          if (!btn) return;
+          btn.innerHTML = this.value === 'glb' ? 'Export GLB' : originalButtonText;
+        });
+      }
+    }
+
+    document.body.addEventListener('renderDone', function() {
+      setTimeout(addGLBExportOption, 200);
+    });
+
+    window.addEventListener('load', function() {
+      setTimeout(addGLBExportOption, 2000);
+      setTimeout(enhanceColorPicker, 1000);
+      setTimeout(enhanceColorPicker, 2000);
+    });
+
+    // Poll for viewer initialization
+    var viewerFixInterval = setInterval(function() {
+      fixViewer();
+      if (viewerFixed) clearInterval(viewerFixInterval);
+    }, 500);
+    setTimeout(function() {
+      clearInterval(viewerFixInterval);
+      fixViewer();
+    }, 30000);
+  </script>
+
+</body>
+</html>

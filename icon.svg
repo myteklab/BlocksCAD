@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#16213e"/>
+    </linearGradient>
+  </defs>
+  <rect width="128" height="128" rx="16" fill="url(#bg)"/>
+  <!-- Back block (green) -->
+  <g transform="translate(64,38)">
+    <polygon points="0,-18 22,-6 22,12 0,24 -22,12 -22,-6" fill="#3ddc84" opacity="0.7"/>
+    <polygon points="0,-18 22,-6 0,6 -22,-6" fill="#5ae4a0"/>
+    <polygon points="22,-6 22,12 0,24 0,6" fill="#2bb86a"/>
+    <polygon points="-22,-6 0,6 0,24 -22,12" fill="#34c97a"/>
+  </g>
+  <!-- Front-left block (blue) -->
+  <g transform="translate(42,62)">
+    <polygon points="0,-18 22,-6 22,12 0,24 -22,12 -22,-6" fill="#4a90d9" opacity="0.9"/>
+    <polygon points="0,-18 22,-6 0,6 -22,-6" fill="#6ab0f0"/>
+    <polygon points="22,-6 22,12 0,24 0,6" fill="#3878bf"/>
+    <polygon points="-22,-6 0,6 0,24 -22,12" fill="#4a8cd0"/>
+  </g>
+  <!-- Front-right block (orange) -->
+  <g transform="translate(86,62)">
+    <polygon points="0,-18 22,-6 22,12 0,24 -22,12 -22,-6" fill="#f5a623" opacity="0.9"/>
+    <polygon points="0,-18 22,-6 0,6 -22,-6" fill="#ffc04d"/>
+    <polygon points="22,-6 22,12 0,24 0,6" fill="#d48b1a"/>
+    <polygon points="-22,-6 0,6 0,24 -22,12" fill="#e8961e"/>
+  </g>
+  <!-- Top block (pink/magenta) -->
+  <g transform="translate(64,50)">
+    <polygon points="0,-24 18,-14 18,0 0,10 -18,0 -18,-14" fill="#ff80ff" opacity="0.85"/>
+    <polygon points="0,-24 18,-14 0,-4 -18,-14" fill="#ffa0ff"/>
+    <polygon points="18,-14 18,0 0,10 0,-4" fill="#dd60dd"/>
+    <polygon points="-18,-14 0,-4 0,10 -18,0" fill="#ee70ee"/>
+  </g>
+</svg>
