@@ -1649,6 +1649,20 @@
         return null;
       }
 
+      // BlocksCAD (like OpenSCAD) is Z-up with the front facing -Y. glTF is Y-up with the front
+      // facing +Z, so without this a model arrived lying on its face. (x, y, z) -> (x, z, -y) is
+      // a rotation, not a mirror, so the triangles keep their winding.
+      function toYUp(a) {
+        if (!a) return;
+        for (var i = 0; i < a.length; i += 3) {
+          var y = a[i + 1];
+          a[i + 1] = a[i + 2];
+          a[i + 2] = -y;
+        }
+      }
+      toYUp(positions);
+      toYUp(normals);
+
       var minPos = [Infinity, Infinity, Infinity];
       var maxPos = [-Infinity, -Infinity, -Infinity];
       for (var i = 0; i < vertexCount; i++) {
