@@ -95,22 +95,50 @@
     return tags;
   }
 
+  // Face colors go through the lights, so a lit part on a wall facing away (the inside of a
+  // hole) came out dark brown. An unlit see-through layer over the same faces shows at any angle.
+  function clearOverlay(v) {
+    var o = v._pickOverlay;
+    if (!o) return;
+    if (o.parent) o.parent.remove(o);
+    o.material.dispose();
+    v._pickOverlay = null;
+  }
+
+  function addOverlay(v, faceList) {
+    var g = new THREE.Geometry();
+    g.vertices = v.mesh.geometry.vertices;
+    g.faces = faceList;
+    var o = new THREE.Mesh(g, new THREE.MeshBasicMaterial({
+      color: HIGHLIGHT, transparent: true, opacity: 0.55, side: THREE.DoubleSide,
+      depthWrite: false, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1
+    }));
+    o.position.copy(v.mesh.position);
+    o.quaternion.copy(v.mesh.quaternion);
+    o.scale.copy(v.mesh.scale);
+    v.mesh.parent.add(o);
+    v._pickOverlay = o;
+  }
+
   function paint(selected) {
     var v = viewer();
-    if (!v || !v.mesh) return;
+    if (!v) return;
+    clearOverlay(v);
+    if (!v.mesh) return;
     var map = facesOf(v.mesh);
     if (!map) return;
     var tags = selected ? tagsUnder(selected) : null;
-    var anyLit = false;
-    if (tags) map.tags.forEach(function (t) { if (tags[t]) anyLit = true; });
     var faces = v.mesh.geometry.faces;
+    var lit = [];
+    if (tags) for (var k = 0; k < faces.length; k++) if (tags[map.tags[k]]) lit.push(faces[k].clone());
     for (var i = 0; i < faces.length; i++) {
       var c = faces[i].color.copy(map.base[i]);
-      if (!anyLit) continue;
+      if (!lit.length) continue;
       if (tags[map.tags[i]]) c.lerp(HIGHLIGHT, 0.85);
       else c.multiplyScalar(DIM);
     }
     v.mesh.geometry.colorsNeedUpdate = true;
+    if (lit.length) addOverlay(v, lit);
     if (v.onDraw) v.onDraw();
   }
 

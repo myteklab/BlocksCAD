@@ -233,7 +233,7 @@
   Blockly.Blocks.bs_resize = wrapperBlock({
     init: function () {
       this.category = 'TRANSFORM';
-      this.setColour(Blockscad.Toolbox.HEX_TRANSFORM);
+      this.setColour(modifyColour());
       this.appendDummyInput().appendField('resize to');
       numberInput(this, 'XVAL', 'X');
       numberInput(this, 'YVAL', 'Y');
@@ -257,7 +257,7 @@
   Blockly.Blocks.bs_on_floor = wrapperBlock({
     init: function () {
       this.category = 'TRANSFORM';
-      this.setColour(Blockscad.Toolbox.HEX_TRANSFORM);
+      this.setColour(modifyColour());
       this.appendDummyInput().appendField('sit on the floor, centered');
       this.appendStatementInput('A').setCheck(['CSG', 'CAG']);
       this.setPreviousStatement(true, ['CSG', 'CAG']);
@@ -394,9 +394,11 @@
   // written out at the top. Rendering here skips this: the worker has its own versions, and a
   // module defined in the code would hide them.
 
+  // No spaces around "=" inside these: the Code tab's formatter (Blockscad.processCodeForOutput)
+  // turns "name = value," into "name = value;" to tidy variable lists, and broke the points.
   var PRELUDE = {
-    bs_regular_polygon: 'module bs_regular_polygon(sides=6, r=10) {\n  polygon([for (i = [0:sides-1]) [r*cos(90+360*i/sides), r*sin(90+360*i/sides)]]);\n}',
-    bs_star: 'module bs_star(points=5, r1=10, r2=5) {\n  polygon([for (i = [0:2*points-1]) [(i%2==0 ? r1 : r2)*cos(90+180*i/points), (i%2==0 ? r1 : r2)*sin(90+180*i/points)]]);\n}',
+    bs_regular_polygon: 'module bs_regular_polygon(sides=6, r=10) {\n  polygon([for (i=[0:sides-1]) [r*cos(90+360*i/sides), r*sin(90+360*i/sides)]]);\n}',
+    bs_star: 'module bs_star(points=5, r1=10, r2=5) {\n  polygon([for (i=[0:2*points-1]) [(i%2==0 ? r1 : r2)*cos(90+180*i/points), (i%2==0 ? r1 : r2)*sin(90+180*i/points)]]);\n}',
     bs_round_edges: '// OpenSCAD has no exact match for "round edges", so here it leaves the shape as it is.\nmodule bs_round_edges(r=1) { children(); }',
     bs_shell: '// OpenSCAD has no exact match for "hollow out", so here it leaves the shape as it is.\nmodule bs_shell(thickness=1, open_top=false) { children(); }',
     bs_on_floor: '// OpenSCAD cannot measure a shape, so "sit on the floor" leaves it where it is.\nmodule bs_on_floor() { children(); }'
@@ -404,6 +406,10 @@
 
   var doRender = Blockscad.doRender;
   Blockscad.doRender = function () {
+    // The viewer panel's size readout is only refilled by a render that succeeds, so an error
+    // left the last model's size showing.
+    var size = document.getElementById('mytekos-dimensions');
+    if (size) size.textContent = '';
     Blockscad.renderingNow = true;
     try {
       return doRender.apply(this, arguments);
