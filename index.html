@@ -75,7 +75,7 @@
 
   <!-- New blocks, a faster render worker, and click-a-part-to-find-its-block -->
   <script src="js/extra-blocks.js?v=6"></script>
-  <script src="js/render-worker.js?v=1"></script>
+  <script src="js/render-worker.js?v=2"></script>
   <script src="js/pick.js?v=5"></script>
 
   <!-- BlocksCAD CSS -->
@@ -1435,8 +1435,11 @@
       var radius = sphere.radius;
       var center = sphere.center.clone();
       if (viewer.mesh.matrixWorld) center.applyMatrix4(viewer.mesh.matrixWorld);
-      var fov = viewer.camera.fov * (Math.PI / 180);
-      var dist = radius / Math.sin(fov / 2) * 1.3;
+      // camera.fov is the vertical angle. This viewer is usually taller than it is wide, so the
+      // horizontal angle is the narrower one and has to set the distance, or tall models spill out.
+      var halfV = viewer.camera.fov * (Math.PI / 180) / 2;
+      var halfH = Math.atan(Math.tan(halfV) * viewer.camera.aspect);
+      var dist = radius / Math.sin(Math.min(halfV, halfH)) * 1.15;
       var c = viewer.controls;
       if (c && c.targetSpherical && c.targetTarget) {
         // These controls keep their own copy of the view and write it back to the camera on the

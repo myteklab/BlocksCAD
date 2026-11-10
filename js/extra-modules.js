@@ -98,6 +98,80 @@ var ExtraModules = (function () {
     return FastBooleans.wasm();
   }
 
+  // Minkowski sums and differences drop Manifold's per-face properties, so every face of a
+  // rounded or hollowed shape came back with the first part's color and block (a blue sphere
+  // rounded beside a red cube turned red). The new surface stays within the radius of the old
+  // one, so each face goes back to the part whose surface is nearest to it.
+  function giveFacesToNearestPart(out, source) {
+    var owners = [];
+    source.polygons.forEach(function (p) { if (owners.indexOf(p.shared) < 0) owners.push(p.shared); });
+    if (owners.length === 1) {
+      out.polygons.forEach(function (p) { p.shared = owners[0]; });
+      return out;
+    }
+    var tris = [];
+    source.polygons.forEach(function (p) {
+      for (var k = 1; k + 1 < p.vertices.length; k++) tris.push([p.vertices[0].pos, p.vertices[k].pos, p.vertices[k + 1].pos, p.shared]);
+    });
+    var b = source.getBounds();
+    var cell = Math.max(b[1].minus(b[0]).length() / 40, 1e-3);
+    var grid = {};
+    function key(i, j, k) { return i + ',' + j + ',' + k; }
+    tris.forEach(function (t, n) {
+      var xs = [t[0].x, t[1].x, t[2].x], ys = [t[0].y, t[1].y, t[2].y], zs = [t[0].z, t[1].z, t[2].z];
+      var lo = [xs, ys, zs].map(function (v) { return Math.floor(Math.min.apply(null, v) / cell); });
+      var hi = [xs, ys, zs].map(function (v) { return Math.floor(Math.max.apply(null, v) / cell); });
+      for (var i = lo[0]; i <= hi[0]; i++) for (var j = lo[1]; j <= hi[1]; j++) for (var k = lo[2]; k <= hi[2]; k++) {
+        var c = key(i, j, k);
+        (grid[c] || (grid[c] = [])).push(n);
+      }
+    });
+    out.polygons.forEach(function (p) {
+      var cx = 0, cy = 0, cz = 0;
+      p.vertices.forEach(function (v) { cx += v.pos.x; cy += v.pos.y; cz += v.pos.z; });
+      var pt = new CSG.Vector3D(cx / p.vertices.length, cy / p.vertices.length, cz / p.vertices.length);
+      var ci = Math.floor(pt.x / cell), cj = Math.floor(pt.y / cell), ck = Math.floor(pt.z / cell);
+      var best = Infinity, owner = null, seen = {};
+      // Widen the search one ring at a time; one ring past the first hit can still hold a closer one.
+      for (var ring = 0, stopAt = Infinity; ring <= stopAt && ring < 60; ring++) {
+        for (var i = ci - ring; i <= ci + ring; i++) for (var j = cj - ring; j <= cj + ring; j++) for (var k = ck - ring; k <= ck + ring; k++) {
+          if (Math.max(Math.abs(i - ci), Math.abs(j - cj), Math.abs(k - ck)) !== ring) continue;
+          var list = grid[key(i, j, k)];
+          if (!list) continue;
+          for (var n = 0; n < list.length; n++) {
+            if (seen[list[n]]) continue;
+            seen[list[n]] = 1;
+            var t = tris[list[n]];
+            var d = distanceToTriangle(pt, t[0], t[1], t[2]);
+            if (d < best) { best = d; owner = t[3]; }
+          }
+        }
+        if (owner && stopAt === Infinity) stopAt = ring + 1;
+      }
+      if (owner) p.shared = owner;
+    });
+    return out;
+  }
+
+  // Squared distance from p to triangle abc (Ericson, Real-Time Collision Detection 5.1.5).
+  function distanceToTriangle(p, a, b, c) {
+    var ab = b.minus(a), ac = c.minus(a), ap = p.minus(a);
+    var d1 = ab.dot(ap), d2 = ac.dot(ap);
+    if (d1 <= 0 && d2 <= 0) return ap.lengthSquared();
+    var bp = p.minus(b), d3 = ab.dot(bp), d4 = ac.dot(bp);
+    if (d3 >= 0 && d4 <= d3) return bp.lengthSquared();
+    var vc = d1 * d4 - d3 * d2;
+    if (vc <= 0 && d1 >= 0 && d3 <= 0) return p.minus(a.plus(ab.times(d1 / (d1 - d3)))).lengthSquared();
+    var cp = p.minus(c), d5 = ab.dot(cp), d6 = ac.dot(cp);
+    if (d6 >= 0 && d5 <= d6) return cp.lengthSquared();
+    var vb = d5 * d2 - d1 * d6;
+    if (vb <= 0 && d2 >= 0 && d6 <= 0) return p.minus(a.plus(ac.times(d2 / (d2 - d6)))).lengthSquared();
+    var va = d3 * d6 - d5 * d4;
+    if (va <= 0 && (d4 - d3) >= 0 && (d5 - d6) >= 0) return p.minus(b.plus(c.minus(b).times((d4 - d3) / ((d4 - d3) + (d5 - d6))))).lengthSquared();
+    var denom = 1 / (va + vb + vc);
+    return p.minus(a.plus(ab.times(vb * denom)).plus(ac.times(vc * denom))).lengthSquared();
+  }
+
   function withManifold(shape, fn) {
     var wasm = FastBooleans.wasm();
     var palette = FastBooleans.newPalette();
@@ -108,7 +182,7 @@ var ExtraModules = (function () {
       var out = fn(m, wasm, made);
       made.push(out);
       if (out.isEmpty && out.isEmpty()) return null;
-      return FastBooleans.fromManifold(out, palette);
+      return giveFacesToNearestPart(FastBooleans.fromManifold(out, palette), shape);
     } finally {
       FastBooleans.deleteAll(made);
     }
