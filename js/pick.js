@@ -189,7 +189,7 @@
       down = null;
       if (moved < 6 && quick) pickAt(e.clientX, e.clientY);
     });
-    canvas.title = 'Click a part to find its block';
+    canvas.title = 'Click a part to find its block. Shift + drag moves the view.';
     return true;
   }
 

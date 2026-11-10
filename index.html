@@ -76,7 +76,7 @@
   <!-- New blocks, a faster render worker, and click-a-part-to-find-its-block -->
   <script src="js/extra-blocks.js?v=6"></script>
   <script src="js/render-worker.js?v=3"></script>
-  <script src="js/pick.js?v=5"></script>
+  <script src="js/pick.js?v=6"></script>
   <script src="js/project-load.js?v=1"></script>
 
   <!-- BlocksCAD CSS -->
@@ -1045,7 +1045,12 @@
       this.animationId = null;
 
       this.onMouseDown = function(e) {
-        if (e.button === 0) {
+        // Shift + drag pans, for trackpads that have no easy right-button drag.
+        if (e.button === 0 && e.shiftKey) {
+          self.isPanning = true;
+          self.prevMouse.x = e.clientX;
+          self.prevMouse.y = e.clientY;
+        } else if (e.button === 0) {
           self.isRotating = true;
           self.prevMouse.x = e.clientX;
           self.prevMouse.y = e.clientY;
