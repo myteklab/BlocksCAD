@@ -188,6 +188,109 @@ var ExtraModules = (function () {
     }
   }
 
+  // ---- shrinking and rounding solid pieces ----
+  // Manifold's minkowski sum and difference split a shape into convex chunks first, which made
+  // rounding a single sphere take 2.5 s. A convex piece has a direct answer: shrinking it moves
+  // every face inward by r, and growing that back with a ball is the hull of a ball at each
+  // corner. Pieces that are not convex (an L made of two cubes) keep the minkowski route,
+  // because rounding their parts one by one would leave a groove where the parts meet.
+
+  function meshPoints(m) {
+    var g = m.getMesh(), np = g.numProp, v = g.vertProperties, out = [];
+    for (var i = 0; i < v.length; i += np) out.push([v[i], v[i + 1], v[i + 2]]);
+    return out;
+  }
+
+  // One [normal, offset] per distinct face plane.
+  function facePlanes(m) {
+    var g = m.getMesh(), np = g.numProp, v = g.vertProperties, t = g.triVerts, seen = {}, out = [];
+    for (var i = 0; i < t.length; i += 3) {
+      var a = t[i] * np, b = t[i + 1] * np, c = t[i + 2] * np;
+      var ux = v[b] - v[a], uy = v[b + 1] - v[a + 1], uz = v[b + 2] - v[a + 2];
+      var wx = v[c] - v[a], wy = v[c + 1] - v[a + 1], wz = v[c + 2] - v[a + 2];
+      var nx = uy * wz - uz * wy, ny = uz * wx - ux * wz, nz = ux * wy - uy * wx;
+      var len = Math.sqrt(nx * nx + ny * ny + nz * nz);
+      if (len < 1e-12) continue;
+      nx /= len; ny /= len; nz /= len;
+      var d = nx * v[a] + ny * v[a + 1] + nz * v[a + 2];
+      var key = Math.round(nx * 1e5) + ',' + Math.round(ny * 1e5) + ',' + Math.round(nz * 1e5) + ',' + Math.round(d * 1e4);
+      if (seen[key]) continue;
+      seen[key] = 1;
+      out.push([nx, ny, nz, d]);
+    }
+    return out;
+  }
+
+  function isConvex(m, made) {
+    var h = m.hull();
+    made.push(h);
+    var hv = h.volume();
+    return Math.abs(hv - m.volume()) <= 1e-5 * Math.max(1, hv);
+  }
+
+  // The corners of a convex piece with every face moved inward by r, or null when nothing is
+  // left. Done by duality around an inside point: each moved face becomes a point, and each
+  // face of the hull of those points becomes a corner. One hull instead of hundreds of cuts.
+  function shrinkConvex(m, r, wasm, made) {
+    var pts = meshPoints(m), c = [0, 0, 0];
+    pts.forEach(function (p) { c[0] += p[0]; c[1] += p[1]; c[2] += p[2]; });
+    c = c.map(function (x) { return x / pts.length; });
+    var dual = [];
+    var planes = facePlanes(m);
+    for (var i = 0; i < planes.length; i++) {
+      var q = planes[i];
+      var dist = q[3] - r - (q[0] * c[0] + q[1] * c[1] + q[2] * c[2]);
+      if (dist <= 1e-9) return null;
+      dual.push([q[0] / dist, q[1] / dist, q[2] / dist]);
+    }
+    var h = wasm.Manifold.hull(dual);
+    made.push(h);
+    var corners = [];
+    var hp = facePlanes(h);
+    for (var j = 0; j < hp.length; j++) {
+      if (hp[j][3] <= 1e-12) return null;
+      corners.push([c[0] + hp[j][0] / hp[j][3], c[1] + hp[j][1] / hp[j][3], c[2] + hp[j][2] / hp[j][3]]);
+    }
+    return corners;
+  }
+
+  function shrinkPiece(piece, r, segments, wasm, made) {
+    if (isConvex(piece, made)) {
+      var corners = shrinkConvex(piece, r, wasm, made);
+      if (!corners) return null;
+      var hull = wasm.Manifold.hull(corners);
+      made.push(hull);
+      return hull.isEmpty() ? null : hull;
+    }
+    var ball = wasm.Manifold.sphere(r, segments);
+    made.push(ball);
+    var shrunk = piece.minkowskiDifference(ball);
+    made.push(shrunk);
+    return shrunk.isEmpty() ? null : shrunk;
+  }
+
+  function roundPiece(piece, r, segments, wasm, made) {
+    var ball = wasm.Manifold.sphere(r, segments);
+    made.push(ball);
+    if (isConvex(piece, made)) {
+      var corners = shrinkConvex(piece, r, wasm, made);
+      if (!corners) return null;
+      var bp = meshPoints(ball), sums = [];
+      corners.forEach(function (p) {
+        bp.forEach(function (b) { sums.push([p[0] + b[0], p[1] + b[1], p[2] + b[2]]); });
+      });
+      var out = wasm.Manifold.hull(sums);
+      made.push(out);
+      return out;
+    }
+    var shrunk = piece.minkowskiDifference(ball);
+    made.push(shrunk);
+    if (shrunk.isEmpty()) return null;
+    var grown = shrunk.minkowskiSum(ball);
+    made.push(grown);
+    return grown;
+  }
+
   function tagShared(shared, n) {
     var copy = new CSG.Polygon.Shared(shared.color);
     copy.blockTag = n;
@@ -280,12 +383,14 @@ var ExtraModules = (function () {
       if (!(r > 0)) return shape;
       if (typeof FastBooleans === 'undefined' || !FastBooleans.active()) return shape.contract(r, segments).expand(r, segments);
       var out = withManifold(shape, function (m, wasm, made) {
-        var ball = wasm.Manifold.sphere(r, segments);
-        made.push(ball);
-        var shrunk = m.minkowskiDifference(ball);
-        made.push(shrunk);
-        if (shrunk.isEmpty()) fail('That radius is too big for this shape. Try a smaller one.');
-        return shrunk.minkowskiSum(ball);
+        var pieces = m.decompose();
+        pieces.forEach(function (p) { made.push(p); });
+        var rounded = pieces.map(function (piece) {
+          var result = roundPiece(piece, r, segments, wasm, made);
+          if (!result) fail('That radius is too big for this shape. Try a smaller one.');
+          return result;
+        });
+        return rounded.length === 1 ? rounded[0] : wasm.Manifold.union(rounded);
       });
       return out || fail('Round edges made the shape disappear. Try a smaller radius.');
     },
@@ -301,11 +406,15 @@ var ExtraModules = (function () {
         return shape.subtract(innerSlow);
       }
       return withManifold(shape, function (m, wasm, made) {
-        var ball = wasm.Manifold.sphere(t, segments);
-        made.push(ball);
-        var inner = m.minkowskiDifference(ball);
+        var pieces = m.decompose();
+        pieces.forEach(function (p) { made.push(p); });
+        var cavities = pieces.map(function (piece) {
+          var inner = shrinkPiece(piece, t, segments, wasm, made);
+          if (!inner) fail('The walls are thicker than the shape. Try a thinner wall.');
+          return inner;
+        });
+        var inner = cavities.length === 1 ? cavities[0] : wasm.Manifold.union(cavities);
         made.push(inner);
-        if (inner.isEmpty()) fail('The walls are thicker than the shape. Try a thinner wall.');
         if (openTop) {
           var raised = inner.translate([0, 0, t * 1.5]);
           made.push(raised);

@@ -16,7 +16,7 @@
     'dist/csg_compressed-ea5407529e.js',
     'dist/formats_compressed-5279859f68.js',
     'js/fast-booleans.js?v=1',
-    'js/extra-modules.js?v=2'
+    'js/extra-modules.js?v=3'
   ];
   var MANIFOLD = 'vendor/manifold/manifold.js';
 
