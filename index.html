@@ -1714,7 +1714,9 @@
         scenes: [{ nodes: [0], name: 'Scene' }],
         nodes: [{ mesh: 0, name: 'BlocksCAD Model' }],
         meshes: [{ name: 'BlocksCAD Mesh', primitives: [{ attributes: attributes, mode: 4, material: 0 }] }],
-        materials: [{ name: 'BlocksCAD Material', pbrMetallicRoughness: { metallicFactor: 0.1, roughnessFactor: 0.7 }, doubleSided: true }],
+        // Printed plastic, not metal: with no environment to reflect, the old 0.1 metallic only
+        // darkened every color in a GLB viewer. A little gloss gives the key light a highlight.
+        materials: [{ name: 'BlocksCAD Material', pbrMetallicRoughness: { metallicFactor: 0, roughnessFactor: 0.5 }, doubleSided: true }],
         accessors: accessors,
         bufferViews: bufferViews,
         buffers: [{ byteLength: paddedBinSize }]
